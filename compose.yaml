@@ -20,6 +20,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sentinelpay
       SPRING_DATASOURCE_USERNAME: sentinelpay
       SPRING_DATASOURCE_PASSWORD: sentinelpay
+      DEMO_ANALYST_USERNAME: demo-analyst
+      DEMO_ANALYST_PASSWORD: local-demo-password-change-me
     depends_on:
       db:
         condition: service_healthy

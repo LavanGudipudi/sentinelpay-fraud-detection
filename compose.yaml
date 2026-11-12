@@ -1,0 +1,8 @@
+services:
+  sentinelpay:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DEMO_MODE: "true"
+    restart: unless-stopped

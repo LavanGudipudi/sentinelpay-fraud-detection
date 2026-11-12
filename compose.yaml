@@ -1,8 +1,27 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sentinelpay
+      POSTGRES_USER: sentinelpay
+      POSTGRES_PASSWORD: sentinelpay
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinelpay -d sentinelpay"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - sentinelpay_data:/var/lib/postgresql/data
   sentinelpay:
     build: .
     ports:
       - "8080:8080"
     environment:
-      DEMO_MODE: "true"
-    restart: unless-stopped
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sentinelpay
+      SPRING_DATASOURCE_USERNAME: sentinelpay
+      SPRING_DATASOURCE_PASSWORD: sentinelpay
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  sentinelpay_data:

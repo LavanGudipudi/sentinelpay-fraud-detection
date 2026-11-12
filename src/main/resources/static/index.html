@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SentinelPay · Case desk</title>
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--ink:#17212b;--muted:#71808d;--line:#e6ebef;--navy:#102b3f;--teal:#147d78;--red:#b84c48;--amber:#a76c18;--green:#287b58;--shadow:0 8px 28px #1730440b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--navy);color:white;padding:18px max(24px,calc((100vw - 1220px)/2));display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:750;letter-spacing:.2px;font-size:18px}.brand span{color:#7dd4c4}.topnote{color:#c3d1d9;font-size:12px}
+main{max-width:1220px;margin:34px auto;padding:0 24px}.eyebrow{color:var(--teal);font-size:11px;font-weight:750;letter-spacing:1.4px;text-transform:uppercase}
+h1{font-size:28px;letter-spacing:-.7px;margin:5px 0}.sub{color:var(--muted);margin:0 0 24px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.metric,.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.metric{padding:17px 18px}.metric label{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:25px;margin-top:5px;letter-spacing:-.6px}.metric small{color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.85fr);gap:16px}.panel{overflow:hidden}.panelhead{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.panelhead h2{font-size:15px;margin:0}.panelhead small{color:var(--muted)}
+table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.7px;font-weight:650;background:#fbfcfd;padding:12px 15px}td{padding:14px 15px;border-top:1px solid var(--line);font-size:13px}tr.case{cursor:pointer}tr.case:hover,tr.case.selected{background:#f0f8f7}.id{font-weight:700;color:#174b59}.customer{font-weight:600}.muted{color:var(--muted);font-size:12px}.amount{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+.pill{display:inline-flex;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:750;white-space:nowrap}.critical,.high{background:#fff0ee;color:var(--red)}.medium{background:#fff6e8;color:var(--amber)}.low,.approved{background:#eaf6ef;color:var(--green)}.pending{background:#fff6e8;color:var(--amber)}.rejected{background:#fceeed;color:var(--red)}.escalated{background:#f0edff;color:#6652a3}
+.detail{padding:20px}.detail h3{margin:0 0 3px;font-size:19px}.detail .muted{margin-bottom:17px}.scoreline{display:flex;align-items:center;gap:12px;padding:14px;background:#f7f9fa;border:1px solid var(--line);border-radius:9px;margin:15px 0}.score{font-size:28px;font-weight:800;letter-spacing:-1px}.signals{list-style:none;padding:0;margin:12px 0 18px}.signals li{padding:11px 0;border-bottom:1px solid var(--line)}.signals b{display:block;font-size:13px}.signals p{margin:3px 0 0;color:var(--muted);font-size:12px}.points{float:right;color:var(--muted);font-size:11px}
+label.field{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}input,textarea,select{width:100%;border:1px solid #dbe2e7;border-radius:7px;padding:10px;font:inherit;background:#fff;color:var(--ink)}textarea{resize:vertical;min-height:65px}.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}button{border:0;border-radius:7px;padding:9px 13px;font-weight:700;font-size:12px;cursor:pointer}.approve{background:#e7f4ec;color:#246b49}.reject{background:#fceeed;color:#a83f3b}.escalate{background:#eeeafd;color:#62509b}.secondary{background:#edf2f5;color:#344b5a}.empty{padding:35px;text-align:center;color:var(--muted)}.footer{margin:20px 0;color:var(--muted);font-size:11px;text-align:center}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}main{margin:22px auto}.tablewrap{overflow-x:auto}table{min-width:590px}}
+</style></head>
+<body>
+<header><div class="brand">◈ Sentinel<span>Pay</span></div><div class="topnote">PAYMENTS INTELLIGENCE &nbsp; / &nbsp; CASE DESK</div></header>
+<main>
+<div class="eyebrow">Operations · Fraud review</div><h1>Good afternoon. Here is the queue.</h1><p class="sub">A small working demo for reviewing unusual payment activity. Every signal has a reason; every decision leaves a trace.</p>
+<section class="metrics">
+<div class="metric"><label>Transactions monitored</label><strong id="m-total">—</strong><small>In this demo dataset</small></div>
+<div class="metric"><label>Awaiting review</label><strong id="m-pending">—</strong><small>Cases not yet decided</small></div>
+<div class="metric"><label>Elevated risk</label><strong id="m-risk">—</strong><small>Score of 50 or higher</small></div>
+<div class="metric"><label>Flagged value</label><strong id="m-value">—</strong><small>NOK · elevated-risk cases</small></div>
+</section>
+<div class="layout">
+<section class="panel"><div class="panelhead"><h2>Recent activity</h2><small id="updated">Loading cases…</small></div><div class="tablewrap"><table><thead><tr><th>Case / Customer</th><th>Merchant</th><th>Amount</th><th>Risk</th><th>Status</th></tr></thead><tbody id="cases"></tbody></table></div></section>
+<section class="panel"><div class="panelhead"><h2>Case assessment</h2><small id="case-label">Select a case</small></div><div class="detail" id="detail"><div class="empty">Choose a transaction to see what triggered the alert.</div></div></section>
+</div>
+<div class="footer">SentinelPay is an educational prototype using synthetic data and transparent rules. It does not make real payment decisions.</div>
+</main>
+<script>
+let selected=null, cases=[];
+const money=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const riskClass=l=>l.toLowerCase(), statusClass=s=>s.toLowerCase();
+async function load(){
+ const [summary,data]=await Promise.all([fetch('/api/summary').then(r=>r.json()),fetch('/api/transactions').then(r=>r.json())]);
+ cases=data;
+ document.querySelector('#m-total').textContent=summary.total;
+ document.querySelector('#m-pending').textContent=summary.pending;
+ document.querySelector('#m-risk').textContent=summary.highRisk;
+ document.querySelector('#m-value').textContent=money(summary.flaggedAmountNok);
+ document.querySelector('#updated').textContent='Updated just now';
+ document.querySelector('#cases').innerHTML=cases.map(v=>{const t=v.transaction,a=v.assessment;return '<tr class="case '+(selected===t.id?'selected':'')+'" data-id="'+esc(t.id)+'"><td><span class="id">'+esc(t.id)+'</span><div class="customer">'+esc(t.customer)+'</div></td><td>'+esc(t.merchant)+'</td><td class="amount">'+money(t.amountNok)+'</td><td><span class="pill '+riskClass(a.level)+'">'+a.score+' · '+a.level+'</span></td><td><span class="pill '+statusClass(v.status)+'">'+v.status+'</span></td></tr>'}).join('');
+ document.querySelectorAll('tr.case').forEach(row=>row.addEventListener('click',()=>show(row.dataset.id)));
+ if(selected){const current=cases.find(v=>v.transaction.id===selected);if(current)renderDetail(current);else selected=null;}
+}
+function renderDetail(v){
+ const t=v.transaction,a=v.assessment,el=document.querySelector('#detail');
+ document.querySelector('#case-label').textContent=t.id;
+ el.innerHTML='<h3>'+esc(t.customer)+'</h3><div class="muted">'+esc(t.merchant)+' · '+esc(t.country)+' · '+new Date(t.createdAt).toLocaleString()+'</div>'+
+ '<div class="scoreline"><div class="score">'+a.score+'<span class="muted">/100</span></div><div><span class="pill '+riskClass(a.level)+'">'+a.level+' risk</span><div class="muted" style="margin-top:4px">Rule-based assessment</div></div></div>'+
+ '<div class="muted">WHY THIS CASE WAS FLAGGED</div><ul class="signals">'+(a.signals.length?a.signals.map(s=>'<li><span class="points">+'+s.points+' points</span><b>'+esc(s.title)+'</b><p>'+esc(s.detail)+'</p></li>').join(''):'<li><b>No risk signals found</b><p>This transaction did not trigger the current demo rules.</p></li>')+'</ul>'+
+ '<div class="muted">AMOUNT & CUSTOMER CONTEXT</div><p style="margin:6px 0 2px"><b>'+money(t.amountNok)+'</b> <span class="muted">· usual amount '+money(t.usualAmountNok)+'</span></p><p class="muted">Previous payment: '+t.minutesSincePrevious+' minutes ago · New device: '+(t.newDevice?'Yes':'No')+'</p>'+
+ (v.status==='PENDING'?'<label class="field">Reviewer</label><input id="reviewer" value="Case analyst" maxlength="80"><label class="field">Decision note</label><textarea id="note" maxlength="500" placeholder="Explain the reason for your decision…"></textarea><div class="actions"><button class="approve" data-decision="APPROVED">Approve</button><button class="reject" data-decision="REJECTED">Reject</button><button class="escalate" data-decision="ESCALATED">Escalate</button></div>':'<div class="scoreline"><div><b>'+esc(v.status)+'</b><div class="muted">'+esc(v.reviewerNote)+' · '+(v.reviewedAt?new Date(v.reviewedAt).toLocaleString():'')+'</div></div></div>');
+ el.querySelectorAll('[data-decision]').forEach(b=>b.addEventListener('click',()=>review(b.dataset.decision)));
+}
+function show(id){selected=id;const v=cases.find(x=>x.transaction.id===id);if(v)renderDetail(v);document.querySelectorAll('tr.case').forEach(r=>r.classList.toggle('selected',r.dataset.id===id));}
+async function review(decision){
+ const note=document.querySelector('#note').value.trim(),reviewer=document.querySelector('#reviewer').value.trim();
+ if(!note||!reviewer){alert('Please add a reviewer name and a short decision note.');return;}
+ const response=await fetch('/api/transactions/'+encodeURIComponent(selected)+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,note,reviewer})});
+ if(!response.ok){const err=await response.json().catch(()=>({message:'Could not save the review'}));alert(err.message||'Could not save the review');return;}
+ await load();
+}
+load().catch(()=>{document.querySelector('#cases').innerHTML='<tr><td colspan="5" class="empty">Could not load the demo API. Start the Spring Boot application and refresh.</td></tr>';});
+</script></body></html>

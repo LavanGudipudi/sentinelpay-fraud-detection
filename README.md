@@ -12,7 +12,7 @@ Requirements: Docker and Docker Compose.
 docker compose up --build
 ```
 
-Open [http://localhost:8080](http://localhost:8080). The first start creates the PostgreSQL schema through Flyway and loads fictional demo cases. Review decisions are stored in PostgreSQL and survive application restarts.
+Open [http://localhost:8080](http://localhost:8080). The first start creates the PostgreSQL schema through Flyway and loads fictional demo cases. Review decisions are stored in PostgreSQL and survive application restarts. When the dashboard calls the API, sign in with username `demo-analyst` and password `local-demo-password-change-me` (local demo credentials only). Set `DEMO_ANALYST_USERNAME` and `DEMO_ANALYST_PASSWORD` to override them.
 
 To stop the services:
 
@@ -76,6 +76,7 @@ The score is capped at 100. Bands are LOW (0–24), MEDIUM (25–49), HIGH (50�
 - PostgreSQL for transaction, case, risk-signal and review-audit records.
 - Flyway-managed schema migrations; Hibernate validates the schema rather than creating it.
 - Transactional review updates and optimistic locking on case records.
+- HTTP Basic analyst authentication for API endpoints, BCrypt password hashing and stateless sessions.
 - Request validation and consistent Problem Details error responses.
 - JUnit 5 unit tests and GitHub Actions verification.
 - Docker image runs as a non-root user.
@@ -99,6 +100,6 @@ src/test/
 
 ## Scope and next steps
 
-This is a local portfolio demonstration, not a production-ready fraud service. The dataset is synthetic. The current version does not include authentication/authorisation, secrets management, durable tamper-evident audit controls, rate limiting, message streaming, model training, model monitoring, or a payment-network integration. The demo database credentials in Compose are for local use only and must be replaced before any shared deployment.
+This is a local portfolio demonstration, not a production-ready fraud service. The dataset is synthetic. The current version uses a single in-memory analyst account configured through environment variables; it does not yet provide persistent identity management, fine-grained role administration, secrets management, durable tamper-evident audit controls, rate limiting, message streaming, model training, model monitoring, or a payment-network integration. The demo credentials in Compose are for local use only and must be replaced before any shared deployment.
 
 A realistic next iteration would add role-based analyst access, externalised secrets, idempotent event ingestion, stronger audit integrity, integration tests with PostgreSQL, observability, and a carefully evaluated anomaly-detection model with human review.

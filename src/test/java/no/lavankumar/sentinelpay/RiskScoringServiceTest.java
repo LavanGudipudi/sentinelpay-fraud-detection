@@ -26,7 +26,7 @@ class RiskScoringServiceTest {
         assertTrue(result.signals().isEmpty());
     }
 
-    @Test void capsScoreAtOneHundred() {
+    @Test void combinesAllFourSignalsIntoCriticalRiskScore() {
         Transaction tx = new Transaction("T-3", "Demo Customer", new BigDecimal("20000"), "Online Shop",
                 "SE", 1, new BigDecimal("100"), true, Instant.now());
         assertEquals(95, scorer.assess(tx).score());

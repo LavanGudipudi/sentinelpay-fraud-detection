@@ -27,9 +27,9 @@ The score is capped at 100. Bands are LOW (0–24), MEDIUM (25–49), HIGH (50�
 
 ## Review workflow
 
-A pending case can be approved, rejected or escalated. The application stores the decision, note, reviewer label and timestamp, and writes a corresponding audit entry in the same transaction. A sequential second decision is rejected with HTTP 409. Concurrent review attempts rely on optimistic locking; translating that race into a stable HTTP conflict response is a follow-up hardening item.
+A pending case can be approved, rejected or escalated. The application stores the decision, note, reviewer label and timestamp, and writes a corresponding audit entry in the same transaction. A sequential second decision is rejected with HTTP 409. Concurrent review attempts rely on optimistic locking. Optimistic-lock failures are translated into HTTP 409 with a message asking the analyst to refresh the case.
 
-The current reviewer is supplied in the request body. This is acceptable only for a local demonstration: a real service must derive the actor from an authenticated identity and enforce permissions server-side.
+The reviewer identity is derived from the authenticated Spring Security principal; the API does not accept a reviewer name from the request body. The demo has one in-memory analyst account, so multi-user identity lifecycle and fine-grained permissions remain out of scope.
 
 ## Security boundary
 

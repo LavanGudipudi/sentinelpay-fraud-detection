@@ -52,8 +52,7 @@ Example review body:
 ```json
 {
   "decision": "ESCALATED",
-  "note": "Please verify the device and contact the customer through the approved channel.",
-  "reviewer": "Case analyst"
+  "note": "Please verify the device and contact the customer through the approved channel."
 }
 ```
 
@@ -75,8 +74,9 @@ The score is capped at 100. Bands are LOW (0–24), MEDIUM (25–49), HIGH (50�
 - Layered packages for API, domain, service, persistence and configuration.
 - PostgreSQL for transaction, case, risk-signal and review-audit records.
 - Flyway-managed schema migrations; Hibernate validates the schema rather than creating it.
-- Transactional review updates and optimistic locking on case records.
-- HTTP Basic analyst authentication for API endpoints, BCrypt password hashing and stateless sessions.
+- Transactional review updates, optimistic locking and HTTP 409 handling for concurrent case decisions.
+- Reviewer identity is taken from the authenticated Spring Security principal, not trusted from the request body.
+- HTTP Basic analyst authentication for API endpoints, BCrypt password hashing and stateless sessions. The demo uses one environment-configured in-memory analyst account.
 - Request validation and consistent Problem Details error responses.
 - JUnit 5 unit tests and GitHub Actions verification.
 - Docker image runs as a non-root user.

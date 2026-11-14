@@ -1,8 +1,10 @@
 # Design notes
 
+These notes describe the current implementation on `feature/postgres-persistence`. They are implementation notes, not a claim that the service is production-ready.
+
 ## Why a rules-first baseline?
 
-The first version uses a small, explicit ruleset rather than claiming to train a fraud model. In a payment environment, a reviewer needs to understand what caused a case to surface. Each signal therefore has a stable code, a plain-language explanation and a points contribution.
+The project uses explicit rules rather than claiming to train or deploy a fraud model. Analysts should be able to see why a synthetic transaction was flagged. Each signal has a stable code, a human-readable explanation and a points contribution.
 
 ## Current rules
 
@@ -13,18 +15,33 @@ The first version uses a small, explicit ruleset rather than claiming to train a
 | New device | Device is marked as first-seen | 20 |
 | Cross-border | Country differs from the demo home market (NO) | 15 |
 
-The score is capped at 100. Bands are LOW (0–24), MEDIUM (25–49), HIGH (50–74) and CRITICAL (75–100). These values are illustrative and are not calibrated probabilities.
+The score is capped at 100. Bands are LOW (0–24), MEDIUM (25–49), HIGH (50–74) and CRITICAL (75–100). These values are illustrative weights, not calibrated fraud probabilities or model confidence. A high score is a review signal, not a finding of fraud.
+
+## Persistence and schema
+
+- PostgreSQL stores synthetic payment transactions, fraud cases, risk signals and review audit entries.
+- Flyway owns schema changes; Hibernate validates the schema at startup.
+- A fraud case is keyed by transaction ID and references its transaction.
+- Risk signals have a unique constraint per transaction and signal code.
+- Review updates run in a database transaction. The case uses a JPA version field for optimistic locking.
 
 ## Review workflow
 
-A pending case can be approved, rejected or escalated. The demo records the reviewer, note, decision and timestamp. A second decision on the same case is rejected with HTTP 409.
+A pending case can be approved, rejected or escalated. The application stores the decision, note, reviewer label and timestamp, and writes a corresponding audit entry in the same transaction. A sequential second decision is rejected with HTTP 409. Concurrent review attempts rely on optimistic locking; translating that race into a stable HTTP conflict response is a follow-up hardening item.
+
+The current reviewer is supplied in the request body. This is acceptable only for a local demonstration: a real service must derive the actor from an authenticated identity and enforce permissions server-side.
+
+## Security boundary
+
+The demo protects API routes with stateless HTTP Basic authentication and BCrypt password hashing. One in-memory analyst account is configured through environment variables. The default credentials are for local use only. This is not persistent identity management, fine-grained authorization, secrets management or a production deployment security design.
 
 ## Deliberate limitations
 
-- All transactions and review history live in memory; a restart resets them.
-- The seeded records are fictional and must not be replaced with real customer or card data.
-- There is no authentication, authorization, rate limiting or production-grade audit storage.
-- Rules do not establish fraud. They surface patterns for investigation.
-- No machine-learning model or real-time payment integration is included.
+- The dataset is fictional and must never be replaced with real customer or card data.
+- The scoring rules are simple heuristics and have not been calibrated against labelled data.
+- No machine-learning model, streaming ingestion, payment-network integration or real payment processing is included.
+- Audit records are persisted, but are not tamper-evident or independently protected from privileged database changes.
+- The current API loads the full demo case set for list/summary operations; pagination and database-side aggregation are future scalability work.
+- Integration, concurrency and security tests need to complement the current risk-scoring unit tests.
 
-These constraints are intentional for a small, runnable portfolio demonstration. A production design would need governed data, identity and access controls, durable event storage, model validation, monitoring, privacy controls and human oversight.
+A production system would require governed data, authenticated identity and access controls, idempotent ingestion, durable and protected audit controls, evaluation and monitoring, privacy controls, operational resilience and human oversight.

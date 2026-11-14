@@ -36,13 +36,31 @@ label.field{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}in
 <div class="footer">SentinelPay is an educational prototype using synthetic data and transparent rules. It does not make real payment decisions.</div>
 </main>
 <script>
-let selected=null, cases=[];
+let selected=null, cases=[], authHeader=null;
+async function apiFetch(url,options={}){
+ const send=()=>fetch(url,{...options,headers:{...(options.headers||{}),...(authHeader?{Authorization:authHeader}:{})}});
+ let response=await send();
+ if(response.status===401){
+  const username=prompt('SentinelPay analyst username');
+  if(username===null)return response;
+  const password=prompt('SentinelPay analyst password');
+  if(password===null)return response;
+  authHeader='Basic '+btoa(unescape(encodeURIComponent(username+':'+password)));
+  response=await send();
+  if(response.status===401){authHeader=null;alert('Authentication failed. Please check the analyst credentials.');}
+ }
+ return response;
+}
 const money=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const riskClass=l=>l.toLowerCase(), statusClass=s=>s.toLowerCase();
 async function load(){
- const [summary,data]=await Promise.all([fetch('/api/summary').then(r=>r.json()),fetch('/api/transactions').then(r=>r.json())]);
- cases=data;
+ const summaryResponse=await apiFetch('/api/summary');
+ if(!summaryResponse.ok)throw new Error('Authentication is required to load the analyst dashboard.');
+ const summary=await summaryResponse.json();
+ const dataResponse=await apiFetch('/api/transactions');
+ if(!dataResponse.ok)throw new Error('Could not load transactions.');
+ cases=await dataResponse.json();
  document.querySelector('#m-total').textContent=summary.total;
  document.querySelector('#m-pending').textContent=summary.pending;
  document.querySelector('#m-risk').textContent=summary.highRisk;
@@ -66,7 +84,7 @@ function show(id){selected=id;const v=cases.find(x=>x.transaction.id===id);if(v)
 async function review(decision){
  const note=document.querySelector('#note').value.trim();
  if(!note){alert('Please add a short decision note.');return;}
- const response=await fetch('/api/transactions/'+encodeURIComponent(selected)+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,note})});
+ const response=await apiFetch('/api/transactions/'+encodeURIComponent(selected)+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,note})});
  if(!response.ok){const err=await response.json().catch(()=>({message:'Could not save the review'}));alert(err.detail||err.message||'Could not save the review');return;}
  await load();
 }

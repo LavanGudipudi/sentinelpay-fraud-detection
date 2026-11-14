@@ -36,13 +36,31 @@ label.field{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}in
 <div class="footer">SentinelPay is an educational prototype using synthetic data and transparent rules. It does not make real payment decisions.</div>
 </main>
 <script>
-let selected=null, cases=[];
+let selected=null, cases=[], authHeader=null;
+async function apiFetch(url,options={}){
+ const send=()=>fetch(url,{...options,headers:{...(options.headers||{}),...(authHeader?{Authorization:authHeader}:{})}});
+ let response=await send();
+ if(response.status===401){
+  const username=prompt('SentinelPay analyst username');
+  if(username===null)return response;
+  const password=prompt('SentinelPay analyst password');
+  if(password===null)return response;
+  authHeader='Basic '+btoa(unescape(encodeURIComponent(username+':'+password)));
+  response=await send();
+  if(response.status===401){authHeader=null;alert('Authentication failed. Please check the analyst credentials.');}
+ }
+ return response;
+}
 const money=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const riskClass=l=>l.toLowerCase(), statusClass=s=>s.toLowerCase();
 async function load(){
- const [summary,data]=await Promise.all([fetch('/api/summary').then(r=>r.json()),fetch('/api/transactions').then(r=>r.json())]);
- cases=data;
+ const summaryResponse=await apiFetch('/api/summary');
+ if(!summaryResponse.ok)throw new Error('Authentication is required to load the analyst dashboard.');
+ const summary=await summaryResponse.json();
+ const dataResponse=await apiFetch('/api/transactions');
+ if(!dataResponse.ok)throw new Error('Could not load transactions.');
+ cases=await dataResponse.json();
  document.querySelector('#m-total').textContent=summary.total;
  document.querySelector('#m-pending').textContent=summary.pending;
  document.querySelector('#m-risk').textContent=summary.highRisk;
@@ -59,15 +77,15 @@ function renderDetail(v){
  '<div class="scoreline"><div class="score">'+a.score+'<span class="muted">/100</span></div><div><span class="pill '+riskClass(a.level)+'">'+a.level+' risk</span><div class="muted" style="margin-top:4px">Rule-based assessment</div></div></div>'+
  '<div class="muted">WHY THIS CASE WAS FLAGGED</div><ul class="signals">'+(a.signals.length?a.signals.map(s=>'<li><span class="points">+'+s.points+' points</span><b>'+esc(s.title)+'</b><p>'+esc(s.detail)+'</p></li>').join(''):'<li><b>No risk signals found</b><p>This transaction did not trigger the current demo rules.</p></li>')+'</ul>'+
  '<div class="muted">AMOUNT & CUSTOMER CONTEXT</div><p style="margin:6px 0 2px"><b>'+money(t.amountNok)+'</b> <span class="muted">· usual amount '+money(t.usualAmountNok)+'</span></p><p class="muted">Previous payment: '+t.minutesSincePrevious+' minutes ago · New device: '+(t.newDevice?'Yes':'No')+'</p>'+
- (v.status==='PENDING'?'<label class="field">Reviewer</label><input id="reviewer" value="Case analyst" maxlength="80"><label class="field">Decision note</label><textarea id="note" maxlength="500" placeholder="Explain the reason for your decision…"></textarea><div class="actions"><button class="approve" data-decision="APPROVED">Approve</button><button class="reject" data-decision="REJECTED">Reject</button><button class="escalate" data-decision="ESCALATED">Escalate</button></div>':'<div class="scoreline"><div><b>'+esc(v.status)+'</b><div class="muted">'+esc(v.reviewerNote)+' · '+(v.reviewedAt?new Date(v.reviewedAt).toLocaleString():'')+'</div></div></div>');
+ (v.status==='PENDING'?'<div class="muted">Your authenticated analyst identity will be recorded with this decision.</div><label class="field">Decision note</label><textarea id="note" maxlength="500" placeholder="Explain the reason for your decision…"></textarea><div class="actions"><button class="approve" data-decision="APPROVED">Approve</button><button class="reject" data-decision="REJECTED">Reject</button><button class="escalate" data-decision="ESCALATED">Escalate</button></div>':'<div class="scoreline"><div><b>'+esc(v.status)+'</b><div class="muted">'+esc(v.reviewerNote)+' · '+(v.reviewedAt?new Date(v.reviewedAt).toLocaleString():'')+'</div></div></div>');
  el.querySelectorAll('[data-decision]').forEach(b=>b.addEventListener('click',()=>review(b.dataset.decision)));
 }
 function show(id){selected=id;const v=cases.find(x=>x.transaction.id===id);if(v)renderDetail(v);document.querySelectorAll('tr.case').forEach(r=>r.classList.toggle('selected',r.dataset.id===id));}
 async function review(decision){
- const note=document.querySelector('#note').value.trim(),reviewer=document.querySelector('#reviewer').value.trim();
- if(!note||!reviewer){alert('Please add a reviewer name and a short decision note.');return;}
- const response=await fetch('/api/transactions/'+encodeURIComponent(selected)+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,note,reviewer})});
- if(!response.ok){const err=await response.json().catch(()=>({message:'Could not save the review'}));alert(err.message||'Could not save the review');return;}
+ const note=document.querySelector('#note').value.trim();
+ if(!note){alert('Please add a short decision note.');return;}
+ const response=await apiFetch('/api/transactions/'+encodeURIComponent(selected)+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,note})});
+ if(!response.ok){const err=await response.json().catch(()=>({message:'Could not save the review'}));alert(err.detail||err.message||'Could not save the review');return;}
  await load();
 }
 load().catch(()=>{document.querySelector('#cases').innerHTML='<tr><td colspan="5" class="empty">Could not load the demo API. Start the Spring Boot application and refresh.</td></tr>';});
